@@ -19,8 +19,10 @@
 
 from __future__ import unicode_literals
 
+import ast as pyast
 import collections
 import functools
+import hashlib
 import os
 import os.path
 
@@ -193,9 +195,7 @@ class _ImportCollector(algorithm.Visitor):
     self.imports.extend(self.importer.visit(node))
 
 
-def collect_imports(modname, script, gopath):
-  with open(script) as py_file:
-    py_contents = py_file.read()
+def _collect_imports(py_contents, modname, script, gopath):
   mod = pythonparser.parse(py_contents)
   future_node, future_features = parse_future_features(mod)
   importer = Importer(gopath, modname, script, future_features.absolute_import)
@@ -204,14 +204,53 @@ def collect_imports(modname, script, gopath):
   return collector.imports
 
 
-def calculate_transitive_deps(modname, script, gopath):
+def _flatten_import(imp):
+  def flatten_binding(binding):
+    return (binding.bind_type, binding.alias, binding.value)
+  flat_bindings = map(flatten_binding, imp.bindings)
+  flat_imp = (imp.name, imp.script, imp.is_native, flat_bindings)
+  return flat_imp
+
+
+def _expand_import(flat_imp):
+  def expand_binding(imp, flat_binding):
+    bind_type, alias, value = flat_binding
+    imp.add_binding(bind_type, alias, value)
+  name, script, is_native, flat_bindings = flat_imp
+  imp = Import(name, script, is_native)
+  for flat_binding in flat_bindings:
+    expand_binding(imp, flat_binding)
+  return imp
+
+
+def collect_imports(modname, script, gopath, cachedir):
+  with open(script) as py_file:
+    py_contents = py_file.read()
+  if cachedir:
+    py_hash = hashlib.sha256(py_contents).hexdigest()
+    cachefile = os.path.join(cachedir, modname)
+    if os.path.exists(cachefile):
+      with open(cachefile, 'r') as cf:
+        ex_hash = cf.readline().strip()
+        if ex_hash == py_hash:
+          flat_imps = pyast.literal_eval(cf.read())
+          imps = map(_expand_import, flat_imps)
+          return imps
+  imps = _collect_imports(py_contents, modname, script, gopath)
+  if cachedir:
+    with open(cachefile, 'w') as cf:
+      cf.write('%s\n%r' % (py_hash, map(_flatten_import, imps)))
+  return imps
+
+
+def calculate_transitive_deps(modname, script, gopath, cachedir):
   """Determines all modules that script transitively depends upon."""
   deps = set()
   def calc(modname, script):
     if modname in deps:
       return
     deps.add(modname)
-    for imp in collect_imports(modname, script, gopath):
+    for imp in collect_imports(modname, script, gopath, cachedir):
       if imp.is_native:
         deps.add(imp.name)
         continue

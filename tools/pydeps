@@ -27,6 +27,8 @@ from grumpy.compiler import util
 parser = argparse.ArgumentParser()
 parser.add_argument('script', help='Python source filename')
 parser.add_argument('-modname', default='__main__', help='Python module name')
+parser.add_argument('-c', '--cachedir',
+                    help='Use directory as cache for some operations')
 
 
 def main(args):
@@ -35,8 +37,16 @@ def main(args):
     print >> sys.stderr, 'GOPATH not set'
     return 1
 
+  if args.cachedir:
+    imp_cachedir = os.path.join(args.cachedir, "imports")
+    if not os.path.exists(imp_cachedir):
+      os.makedirs(imp_cachedir)
+  else:
+    imp_cachedir = None
+
   try:
-    imports = imputil.collect_imports(args.modname, args.script, gopath)
+    imports = imputil.collect_imports(args.modname, args.script, gopath,
+                                      imp_cachedir)
   except SyntaxError as e:
     print >> sys.stderr, '{}: line {}: invalid syntax: {}'.format(
         e.filename, e.lineno, e.text)

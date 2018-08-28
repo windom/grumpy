@@ -34,6 +34,8 @@ from grumpy.compiler import imputil
 
 parser = argparse.ArgumentParser()
 parser.add_argument('-m', '--modname', help='Run the named module')
+parser.add_argument('-c', '--cachedir',
+                    help='Use directory as cache for some operations')
 
 module_tmpl = string.Template("""\
 package main
@@ -89,7 +91,14 @@ def main(args):
       finally:
         os.close(fd)
 
-    names = imputil.calculate_transitive_deps(modname, script, gopath)
+    if args.cachedir:
+      imp_cachedir = os.path.join(args.cachedir, "imports")
+      if not os.path.exists(imp_cachedir):
+        os.makedirs(imp_cachedir)
+    else:
+      imp_cachedir = None
+    names = imputil.calculate_transitive_deps(modname, script, gopath,
+                                              imp_cachedir)
     # Make sure traceback is available in all Python binaries.
     names.add('traceback')
     go_main = os.path.join(workdir, 'main.go')
