@@ -624,6 +624,37 @@ func strNew(f *Frame, t *Type, args Args, _ KWArgs) (*Object, *BaseException) {
 	return s.ToObject(), nil
 }
 
+// strPartition splits the string at the first occurrence of sep, and
+// return a 3-tuple containing the part before the separator, the separator
+// itself, and the part after the separator. If the separator is not found,
+// return a 3-tuple containing the string itself, followed by two empty strings.
+func strPartition(f *Frame, args Args, _ KWArgs) (*Object, *BaseException) {
+	if raised := checkMethodArgs(f, "partition", args, StrType, StrType); raised != nil {
+		return nil, raised
+	}
+	sep := toStrUnsafe(args[1]).Value()
+	if sep == "" {
+		return nil, f.RaiseType(ValueErrorType, "empty separator")
+	}
+	s := toStrUnsafe(args[0]).Value()
+	parts := strings.SplitN(s, sep, 2)
+	switch len(parts) {
+	case 0:
+		parts = []string{"", "", ""}
+	case 1:
+		parts = []string{parts[0], "", ""}
+	case 2:
+		parts = []string{parts[0], sep, parts[1]}
+	default:
+		panic("Can't happen")
+	}
+	results := make([]*Object, len(parts))
+	for i, part := range parts {
+		results[i] = NewStr(part).ToObject()
+	}
+	return NewTuple(results...).ToObject(), nil
+}
+
 // strReplace returns a copy of the string s with the first n non-overlapping
 // instances of old replaced by sub. If old is empty, it matches at the
 // beginning of the string. If n < 0, there is no limit on the number of
@@ -960,6 +991,7 @@ func initStrType(dict map[string]*Object) {
 	dict["startswith"] = newBuiltinFunction("startswith", strStartsWith).ToObject()
 	dict["strip"] = newBuiltinFunction("strip", strStrip).ToObject()
 	dict["swapcase"] = newBuiltinFunction("swapcase", strSwapCase).ToObject()
+	dict["partition"] = newBuiltinFunction("partition", strPartition).ToObject()
 	dict["replace"] = newBuiltinFunction("replace", strReplace).ToObject()
 	dict["rstrip"] = newBuiltinFunction("rstrip", strRStrip).ToObject()
 	dict["title"] = newBuiltinFunction("title", strTitle).ToObject()
