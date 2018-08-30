@@ -183,14 +183,14 @@ def findall(pattern, string, flags=0):
     Empty matches are included in the result."""
     return _compile(pattern, flags).findall(string)
 
-    # if sys.hexversion >= 0x02020000:
-    #     __all__.append("finditer")
-    def finditer(pattern, string, flags=0):
-        """Return an iterator over all non-overlapping matches in the
-        string.  For each match, the iterator returns a match object.
+# if sys.hexversion >= 0x02020000:
+__all__.append("finditer")
+def finditer(pattern, string, flags=0):
+    """Return an iterator over all non-overlapping matches in the
+    string.  For each match, the iterator returns a match object.
 
-        Empty matches are included in the result."""
-        return _compile(pattern, flags).finditer(string)
+    Empty matches are included in the result."""
+    return _compile(pattern, flags).finditer(string)
 
 def compile(pattern, flags=0):
     "Compile a regular expression pattern, returning a pattern object."
