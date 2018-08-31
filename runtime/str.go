@@ -625,22 +625,37 @@ func strPartition(f *Frame, args Args, _ KWArgs) (*Object, *BaseException) {
 		return nil, f.RaiseType(ValueErrorType, "empty separator")
 	}
 	s := toStrUnsafe(args[0]).Value()
-	parts := strings.SplitN(s, sep, 2)
-	switch len(parts) {
-	case 0:
-		parts = []string{"", "", ""}
-	case 1:
-		parts = []string{parts[0], "", ""}
-	case 2:
-		parts = []string{parts[0], sep, parts[1]}
-	default:
-		panic("Can't happen")
+	pos := strings.Index(s, sep)
+	if pos < 0 {
+		emptyStr := NewStr("").ToObject()
+		return NewTuple(args[0], emptyStr, emptyStr).ToObject(), nil
 	}
-	results := make([]*Object, len(parts))
-	for i, part := range parts {
-		results[i] = NewStr(part).ToObject()
+	start := NewStr(s[0:pos]).ToObject()
+	end := NewStr(s[pos+len(sep):]).ToObject()
+	return NewTuple(start, args[1], end).ToObject(), nil
+}
+
+// strPartition splits the string at the last occurrence of sep, and
+// return a 3-tuple containing the part before the separator, the separator
+// itself, and the part after the separator. If the separator is not found,
+// return a 3-tuple containing two empty strings, followed by the string itself.
+func strRPartition(f *Frame, args Args, _ KWArgs) (*Object, *BaseException) {
+	if raised := checkMethodArgs(f, "rpartition", args, StrType, StrType); raised != nil {
+		return nil, raised
 	}
-	return NewTuple(results...).ToObject(), nil
+	sep := toStrUnsafe(args[1]).Value()
+	if sep == "" {
+		return nil, f.RaiseType(ValueErrorType, "empty separator")
+	}
+	s := toStrUnsafe(args[0]).Value()
+	pos := strings.LastIndex(s, sep)
+	if pos < 0 {
+		emptyStr := NewStr("").ToObject()
+		return NewTuple(emptyStr, emptyStr, args[0]).ToObject(), nil
+	}
+	start := NewStr(s[0:pos]).ToObject()
+	end := NewStr(s[pos+len(sep):]).ToObject()
+	return NewTuple(start, args[1], end).ToObject(), nil
 }
 
 // strReplace returns a copy of the string s with the first n non-overlapping
@@ -980,6 +995,7 @@ func initStrType(dict map[string]*Object) {
 	dict["strip"] = newBuiltinFunction("strip", strStrip).ToObject()
 	dict["swapcase"] = newBuiltinFunction("swapcase", strSwapCase).ToObject()
 	dict["partition"] = newBuiltinFunction("partition", strPartition).ToObject()
+	dict["rpartition"] = newBuiltinFunction("rpartition", strRPartition).ToObject()
 	dict["replace"] = newBuiltinFunction("replace", strReplace).ToObject()
 	dict["rstrip"] = newBuiltinFunction("rstrip", strRStrip).ToObject()
 	dict["title"] = newBuiltinFunction("title", strTitle).ToObject()
