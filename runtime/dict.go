@@ -230,8 +230,10 @@ func (iter *dictEntryIterator) next() *dictEntry {
 		// 64bit atomic ops need to be 8 byte aligned. This compile time check
 		// verifies alignment by creating a negative constant for an unsigned type.
 		// See sync/atomic docs for details.
-		const blank = -(unsafe.Offsetof(iter.index) % 8)
-		index := int(atomic.AddInt64(&iter.index, 1)) - 1
+		// const blank = -(unsafe.Offsetof(iter.index) % 8)
+		// index := int(atomic.AddInt64(&iter.index, 1)) - 1
+		index := int(iter.index)
+		iter.index++
 		if index >= numEntries {
 			break
 		}
