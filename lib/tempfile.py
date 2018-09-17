@@ -15,34 +15,36 @@
 """Generate temporary files and directories."""
 
 # pylint: disable=g-multiple-import
-from '__go__/io/ioutil' import TempDir, TempFile
-from '__go__/syscall' import Dup
+# from '__go__/io/ioutil' import TempDir, TempFile
+# from '__go__/syscall' import Dup
 
 
 # pylint: disable=redefined-builtin
 def mkdtemp(suffix='', prefix='tmp', dir=None):
-  if dir is None:
-    dir = ''
-  # TODO: Make suffix actually follow the rest of the filename.
-  path, err = TempDir(dir, prefix + '-' + suffix)
-  if err:
-    raise OSError(err.Error())
-  return path
+  raise NotImplementedError()
+  # if dir is None:
+  #   dir = ''
+  # # TODO: Make suffix actually follow the rest of the filename.
+  # path, err = TempDir(dir, prefix + '-' + suffix)
+  # if err:
+  #   raise OSError(err.Error())
+  # return path
 
 
 def mkstemp(suffix='', prefix='tmp', dir=None, text=False):
-  if text:
-    raise NotImplementedError
-  if dir is None:
-    dir = ''
-  # TODO: Make suffix actually follow the rest of the filename.
-  f, err = TempFile(dir, prefix + '-' + suffix)
-  if err:
-    raise OSError(err.Error())
-  try:
-    fd, err = Dup(f.Fd())
-    if err:
-      raise OSError(err.Error())
-    return fd, f.Name()
-  finally:
-    f.Close()
+  raise NotImplementedError()
+  # if text:
+  #   raise NotImplementedError
+  # if dir is None:
+  #   dir = ''
+  # # TODO: Make suffix actually follow the rest of the filename.
+  # f, err = TempFile(dir, prefix + '-' + suffix)
+  # if err:
+  #   raise OSError(err.Error())
+  # try:
+  #   fd, err = Dup(f.Fd())
+  #   if err:
+  #     raise OSError(err.Error())
+  #   return fd, f.Name()
+  # finally:
+  #   f.Close()

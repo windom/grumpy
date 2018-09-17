@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from '__go__/syscall' import EINTR
+# from '__go__/syscall' import EINTR
 
 
 def invoke(func, *args):
@@ -25,7 +25,7 @@ def invoke(func, *args):
       err = result
       result = ()
     if err:
-      if err == EINTR:
-        continue
+      # if err == EINTR:
+      #   continue
       raise OSError(err.Error())
     return result
