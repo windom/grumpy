@@ -29,6 +29,9 @@ parser.add_argument('script', help='Python source filename')
 parser.add_argument('-modname', default='__main__', help='Python module name')
 parser.add_argument('-c', '--cachedir',
                     help='Use directory as cache for some operations')
+parser.add_argument('-t', '--transitive',
+                    help='Output transitive imports',
+                    action='store_true')
 
 
 def main(args):
@@ -43,6 +46,12 @@ def main(args):
       os.makedirs(imp_cachedir)
   else:
     imp_cachedir = None
+
+  if args.transitive:
+    names = imputil.calculate_transitive_deps(args.modname, args.script,
+                                              gopath, imp_cachedir)
+    for name in names:
+      print name
 
   try:
     imports = imputil.collect_imports(args.modname, args.script, gopath,
